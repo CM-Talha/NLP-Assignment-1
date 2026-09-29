@@ -1,0 +1,495 @@
+
+=========================================
+CELL 1 [markdown]: # DS5007 — Natural Language Processing (Fall 2026)
+=========================================
+--- MARKDOWN CONTENT ---
+# DS5007 — Natural Language Processing (Fall 2026)
+## Programming Assignment 1: Binary Text Classification (Urdu Sarcasm Detection)
+**Role:** NLP Research & Development Engineer  
+**Task:** Binary Text Classification — Sarcastic (`1`) vs. Non-Sarcastic (`0`)  
+**Input Column:** `urdu_text` | **Target Column:** `is_sarcastic` | **Dataset Size:** ~20,000 Social Media Posts  
+**Primary Model Comparison Metric:** **Macro-F1 Score** (with per-class Precision, Recall, F1, Accuracy, and Confusion Matri
+...(truncated)
+
+=========================================
+CELL 2 [markdown]: ## Section 1: Hardware Environment, Reproducibility & Robust Data Loading
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 1: Hardware Environment, Reproducibility & Robust Data Loading
+
+We initialize the computational environment by inspecting hardware accelerators (GPU/CUDA availability), establishing global deterministic seeds across all random number generators, and implementing a 3-tier fallback data loader capable of running seamlessly in local environments, mounted Google Drive directories, or via interactive Colab upload widgets.
+
+=========================================
+CELL 3 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+=== 1. SYSTEM & DEPENDENCY AUDIT ===
+Python Version:       3.13.15
+PyTorch Version:      2.11.0+cu128
+Transformers Version: 5.16.1
+Scikit-Learn Version: 1.6.1
+Pandas Version:       2.2.3
+NumPy Version:        2.1.3
+
+CUDA Accelerator Active: Tesla T4
+Compute Capability:       (7, 5)
+Allocated VRAM:           0.00 MB
+Reserved VRAM:            0.00 MB
+Global seed fixed to: 42
+
+
+=========================================
+CELL 4 [code]: # 3-Tier Robust Data Ingestion
+=========================================
+Outputs count: 3
+  Output 1 [stream]:
+[Tier 2] Checking Google Drive mount...
+[Tier 3] 'urdu_sarcastic_dataset.csv' not found locally.
+TIP: You can also drag & drop 'urdu_sarcastic_dataset.csv' directly into Colab's left Files panel!
+Please upload via the widget below:
+
+  Output 2 [display_data]:
+    Data keys: ['text/plain', 'text/html']
+    text/plain: <IPython.core.display.HTML object>
+  Output 3 [stream]:
+Saving urdu_sarcastic_dataset.csv to urdu_sarcastic_dataset.csv
+Uploaded: urdu_sarcastic_dataset.csv
+
+Raw Dataset Ingested. Shape: (20060, 8)
+Raw Columns: ['urdu_text', 'is_sarcastic', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7']
+
+
+=========================================
+CELL 5 [markdown]: ## Section 2: Rigorous Exploratory Data Analysis (EDA) & Data Sanitization
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 2: Rigorous Exploratory Data Analysis (EDA) & Data Sanitization
+
+Before training models, we perform a thorough data-quality audit to address key real-world challenges:
+1. **Trailing Delimiter Artifacts:** Extra columns (`Unnamed: 2` through `7`) resulting from unescaped commas inside tweets during naive CSV parsing.
+2. **Missing Records:** Unlabelled rows or NaN text entries.
+3. **Duplicate Text & Contradictory Supervision:** Social media platforms abound in retweets and viral reposts
+...(truncated)
+
+=========================================
+CELL 6 [code]: # =============================================================================
+=========================================
+Outputs count: 4
+  Output 1 [stream]:
+=== 1. DATA AUDIT & SANITIZATION ===
+Raw Entry Count:     20,060
+Missing 'urdu_text':   105
+Missing 'is_sarcastic':56
+  Spurious column 'Unnamed: 2': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 3': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 4': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 5': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 6': 17 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 7': 38 non-null artifacts (unescaped CSV commas in tweet bodies)
+
+Valid Sanitized Rows: 19,955
+Raw Label Counts:
+is_sarcastic
+0    9993
+1    9962
+
+=== 2. DUPLICATE & ANNOTATION CONFLICT ANALYSIS ===
+Total rows:               19,955
+Unique Urdu text strings: 15,214
+Duplicate occurrences:   4,741 (23.76%)
+Texts with conflicting annotations (labeled both 0 and 1): 646
+Final Deduplicated Datase
+  ...(stream truncated)
+  Output 2 [display_data]:
+    Data keys: ['text/plain', 'text/html', 'application/vnd.google.colaboratory.intrinsic+json']
+    text/plain:              char_count                    word_count                  
+                   mean    std median  max       mean    std median max
+is_sarcastic                                                           
+0                 71.56  58.54   56.0  327      15.67  12.50   12.0  70
+1                112.76  62.65  101.0  304      23.93  13.06   21.0  71
+  Output 3 [display_data]:
+    Data keys: ['text/plain', 'image/png']
+    text/plain: <Figure size 1800x500 with 3 Axes>
+    [IMAGE PNG present, base64 length: 111829]
+  Output 4 [stream]:
+=== 4. PROTOTYPICAL TEXT EXAMPLES ===
+
+--- PROTOTYPICAL SARCASTIC EXAMPLES (1) ---
+[1] اتنی عزت تو کبھی مریم نے کپٹن صفدر کو نہیں دی جتنی بلاول دے رہا ہے 😏 (Chars: 68, Words: 17)
+[2] سندھ پولیس شائد مہنگائی کی وجہ سے ہی چھٹی پر چلی گئی ھے۔ دفتر آنے جانے کا خرچہ بچاکر گزارہ ہو جاے گا۔ 🙏😃 (Chars: 104, Words: 24)
+[3] بلاول کو سبزیوں کے ریٹ کا کیا پتہ؟ اُسے تو کھیرا مولی گاجر سب فری میں مل جاتا ہے 😁 (Chars: 82, Words: 20)
+
+--- PROTOTYPICAL NON-SARCASTIC EXAMPLES (0) ---
+[1] نہیں پائین 😎 (Chars: 12, Words: 3)
+[2] انساں کو تھکا دیتا ہے سوچوں کا سفر بھی ... 🍁🥀 (Chars: 45, Words: 11)
+[3] حامد میر صاحب ویلڈن👏😊 (Chars: 21, Words: 4)
+
+
+=========================================
+CELL 7 [markdown]: ## Section 3: Stratified Splitting & Urdu-Aware Preprocessing
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 3: Stratified Splitting & Urdu-Aware Preprocessing
+
+### Theoretical Justification of Urdu NLP Preprocessing
+Urdu is an Indo-Aryan language written in an extended Perso-Arabic Nastaliq script from right to left. Preprocessing Urdu text requires handling unique linguistic properties:
+1. **Unicode Orthographic Heterogeneity:** Users interchange Arabic and Urdu character codes for visually identical letters. For instance, Arabic Yeh (`ي`, `U+064A`) vs. Urdu Yeh (`ی`, `U+06CC`), Arabic Kaf
+...(truncated)
+
+=========================================
+CELL 8 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+=== STRATIFIED DATA SPLIT AUDIT ===
+Train Partition:      10,197 samples (70.0%) | Sarcasm Ratio: 0.4055
+Validation Partition: 2,185 samples (15.0%) | Sarcasm Ratio: 0.4055
+Test Partition:       2,186 samples (15.0%) | Sarcasm Ratio: 0.4053
+Zero cross-split data leakage verified.
+Applying Urdu-aware preprocessing across all partitions...
+Preprocessing completed in 0.42 seconds.
+Cleaned Train: 10,197 | Val: 2,185 | Test: 2,186
+
+
+=========================================
+CELL 9 [markdown]: ## Section 4: Classical Baseline Models (TF-IDF + ML Classifiers)
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 4: Classical Baseline Models (TF-IDF + ML Classifiers)
+
+We establish competitive classical baselines using statistical n-gram representations and three distinct supervised learning paradigms:
+1. **Multinomial Naive Bayes (MNB):** Generative probabilistic classifier with Laplace smoothing.
+2. **Logistic Regression (LR):** Discriminative linear classifier optimizing cross-entropy loss with L2 regularization.
+3. **Linear Support Vector Classifier (LinearSVC):** Maximum-margin hyper-plane
+...(truncated)
+
+=========================================
+CELL 10 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+Fitting TF-IDF Word Vectorizer (1-2 n-grams)...
+Vocabulary Dimension: 12,000 features
+
+==========================================
+ EVALUATION SUMMARY: Multinomial Naive Bayes (Word 1-2g)
+==========================================
+Overall Accuracy:  0.7928
+Primary Macro-F1:  0.7802
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8006, Recall=0.8677, F1=0.8328
+Class 1 (Sarcastic):     Precision=0.7786, Recall=0.6828, F1=0.7276
+------------------------------------------
+Confusion Matrix: [TN=1128, FP= 172] | [FN= 281, TP= 605]
+==========================================
+
+
+==========================================
+ EVALUATION SUMMARY: Logistic Regression (Word 1-2g)
+==========================================
+Overall Accuracy:  0.8102
+Primary Macro-F1:  0.7994
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8177, Recall=0.8762, F1=0.8459
+Class 1 (Sarcastic):     Precision=0.7970, Recall=0.7133, F1=0.7528
+-----------------------
+  ...(stream truncated)
+
+=========================================
+CELL 11 [markdown]: ## Section 5: Bonus Feature Engineering (Handcrafted Urdu Linguistic & Stylistic
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 5: Bonus Feature Engineering (Handcrafted Urdu Linguistic & Stylistic Features)
+
+### Motivation for Domain-Specific Feature Engineering (Bonus Marks)
+While standard n-grams capture surface lexical patterns, Urdu social media sarcasm relies heavily on stylized rhetorical conventions and non-verbal cues. To maximize classification performance and address the **Bonus Marks** requirement, we engineer a **17-dimensional domain-specific feature vector**:
+
+1. **Urdu Sarcastic Cue Lexicon (Re
+...(truncated)
+
+=========================================
+CELL 12 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+Constructing and fitting Hybrid Feature Union...
+Combined Feature Matrix Shape: (10197, 18017)
+
+==========================================
+ EVALUATION SUMMARY: Hybrid Model (TF-IDF + Urdu Features)
+==========================================
+Overall Accuracy:  0.8202
+Primary Macro-F1:  0.8134
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8480, Recall=0.8500, F1=0.8490
+Class 1 (Sarcastic):     Precision=0.7792, Recall=0.7765, F1=0.7778
+------------------------------------------
+Confusion Matrix: [TN=1105, FP= 195] | [FN= 198, TP= 688]
+==========================================
+
+Bonus Feature Engineering Performance Delta:
+  Baseline LinearSVC Macro-F1: 0.7979
+  Hybrid Model Macro-F1:       0.8134
+  Empirical Improvement:       +1.55% Macro-F1 points
+
+
+=========================================
+CELL 13 [markdown]: ## Section 6: Deep Neural Architecture (PyTorch BiLSTM with Multi-Head Attention
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 6: Deep Neural Architecture (PyTorch BiLSTM with Multi-Head Attention)
+
+### Mathematical Formulation & Justification
+Sequential neural models overcome the bag-of-words assumption by encoding temporal word dependencies. Because sarcasm in Urdu often hinges on contrast between early premise and late punchline (or closing emoji), we employ **Bidirectional LSTMs with Bahdanau Self-Attention Pooling**:
+
+$$\\mathbf{e}_t = \\text{SpatialDropout}(\\mathbf{W}_e x_t)$$
+$$\\mathbf{h}_t = [\\over
+...(truncated)
+
+=========================================
+CELL 14 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+PyTorch Vocabulary: 9,259 unique tokens (min_freq=2)
+Training BiLSTM for 6 epochs on cuda...
+Epoch 01/06 | Train Loss: 0.5797 | Val Macro-F1: 0.7142
+Epoch 02/06 | Train Loss: 0.4943 | Val Macro-F1: 0.7052
+Epoch 03/06 | Train Loss: 0.4368 | Val Macro-F1: 0.7731
+Epoch 04/06 | Train Loss: 0.3837 | Val Macro-F1: 0.7826
+Epoch 05/06 | Train Loss: 0.3447 | Val Macro-F1: 0.7760
+Epoch 06/06 | Train Loss: 0.3211 | Val Macro-F1: 0.7797
+Restored best BiLSTM model with Val Macro-F1: 0.7826
+
+==========================================
+ EVALUATION SUMMARY: PyTorch BiLSTM with Attention
+==========================================
+Overall Accuracy:  0.8079
+Primary Macro-F1:  0.7970
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8161, Recall=0.8738, F1=0.8440
+Class 1 (Sarcastic):     Precision=0.7935, Recall=0.7111, F1=0.7500
+------------------------------------------
+Confusion Matrix: [TN=1136, FP= 164] | [FN= 256, TP= 630]
+==========================================
+
+
+
+=========================================
+CELL 15 [markdown]: ## Section 7: Pretrained Transformer Experiment (Fine-Tuning Multilingual BERT /
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 7: Pretrained Transformer Experiment (Fine-Tuning Multilingual BERT / Urdu RoBERTa)
+
+### Pretrained Transformers for Urdu NLP
+Pretrained contextual language models represent the state of the art in NLP. Unlike static embeddings or recurrent neural networks that process tokens sequentially, Transformers utilize **Multi-Head Self-Attention** to dynamically construct bidirectional contextual representations across all token positions simultaneously.
+
+### Selected Pretrained Architecture:
+...(truncated)
+
+=========================================
+CELL 16 [code]: # =============================================================================
+=========================================
+Outputs count: 12
+  Output 1 [stream]:
+Loading Pretrained Tokenizer: bert-base-multilingual-cased...
+
+  Output 2 [stream]:
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+  Output 3 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: config.json:   0%|          | 0.00/625 [00:00<?, ?B/s]
+  Output 4 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: tokenizer_config.json:   0%|          | 0.00/49.0 [00:00<?, ?B/s]
+  Output 5 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: vocab.txt:   0%|          | 0.00/996k [00:00<?, ?B/s]
+  Output 6 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: tokenizer.json:   0%|          | 0.00/1.96M [00:00<?, ?B/s]
+  Output 7 [stream]:
+Tokenizing train, val, and test splits for Transformer...
+Instantiating bert-base-multilingual-cased for binary classification...
+
+  Output 8 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: model.safetensors: reconstructing file:   0%|          |  0.00B /  714MB            
+  Output 9 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: model.safetensors: downloading bytes:           |  0.00B            
+  Output 10 [display_data]:
+    Data keys: ['text/plain', 'application/vnd.jupyter.widget-view+json']
+    text/plain: Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]
+  Output 11 [stream]:
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: bert-base-multilingual-cased
+Key                                        | Status     | 
+-------------------------------------------+------------+-
+cls.predictions.transform.dense.weight     | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.bias                       | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
+classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+
+  Output 12 [stream]:
+Fine-tuning Transformer on cuda (2 epochs, lr=2e-05)...
+  Epoch 01 | Step 0079/0319 | Batch Loss: 0.5319
+  Epoch 01 | Step 0158/0319 | Batch Loss: 0.5022
+  Epoch 01 | Step 0237/0319 | Batch Loss: 0.5186
+  Epoch 01 | Step 0316/0319 | Batch Loss: 0.4195
+--> Epoch 01 Complete | Val Macro-F1: 0.7852
+  Epoch 02 | Step 0079/0319 | Batch Loss: 0.3060
+  Epoch 02 | Step 0158/0319 | Batch Loss: 0.4679
+  Epoch 02 | Step 0237/0319 | Batch Loss: 0.3372
+  Epoch 02 | Step 0316/0319 | Batch Loss: 0.5061
+--> Epoch 02 Complete | Val Macro-F1: 0.7956
+Best Transformer checkpoint restored (Val Macro-F1: 0.7956)
+
+==========================================
+ EVALUATION SUMMARY: Transformer (bert-base-multilingual-cased)
+==========================================
+Overall Accuracy:  0.8220
+Primary Macro-F1:  0.8171
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8659, Recall=0.8292, F1=0.8472
+Class 1 (Sarcastic):     Precision=0.7641, Recall=0.8115, F1=0.7871
+--------------------
+  ...(stream truncated)
+
+=========================================
+CELL 17 [markdown]: ## Section 8: Systematic Ablation Study
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 8: Systematic Ablation Study
+
+As explicitly mandated by the assignment guidelines, we systematically evaluate three fundamental preprocessing and architectural choices to determine their empirical impact on Urdu sarcasm classification:
+
+1. **Ablation 1 (Emoji Impact):**
+   - **Hypothesis:** Emojis (e.g., `😂`, `🤣`, `😜`, `😏`) are the primary vehicle for signaling mockery and irony in social media text.
+   - **Experiment:** We train a classifier on text with emojis preserved vs. identica
+...(truncated)
+
+=========================================
+CELL 18 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+=== ABLATION 1: EMOJI IMPACT EXPERIMENT ===
+Results of Emoji Ablation:
+  With Emojis Preserved Macro-F1:    0.7979
+  Without Emojis (Stripped) Macro-F1: 0.8025
+  Empirical Delta:                  -0.0045 Macro-F1 points
+
+=== ABLATION 2: WORD VS. CHARACTER VS. COMBINED N-GRAMS ===
+Word (1-2g) Macro-F1:          0.7979
+Char (3-5g) Macro-F1:          0.8027
+Combined Word + Char Macro-F1: 0.8053
+
+=== ABLATION 3: RAW UNNORMALIZED VS. URDU NORMALIZED TEXT ===
+Raw Unnormalized Text Macro-F1: 0.7969
+Urdu Normalized Text Macro-F1:   0.7979
+Empirical Delta:                 +0.0011 Macro-F1 points
+
+
+=========================================
+CELL 19 [markdown]: ## Section 9: Master Evaluation & Comparative Results Synthesis
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 9: Master Evaluation & Comparative Results Synthesis
+
+Here we synthesize the empirical performance of all developed models:
+1. **Multinomial Naive Bayes** (Classical Generative Baseline)
+2. **Logistic Regression** (Classical Linear Baseline)
+3. **Linear SVC** (Classical Discriminative Baseline)
+4. **Hybrid Model** (TF-IDF + Handcrafted Urdu Sarcasm Features — **Bonus Marks**)
+5. **PyTorch BiLSTM with Self-Attention** (Deep Recurrent Architecture)
+6. **Pretrained Transformer** (Fine-tu
+...(truncated)
+
+=========================================
+CELL 20 [code]: # =============================================================================
+=========================================
+Outputs count: 4
+  Output 1 [stream]:
+=== MASTER PERFORMANCE COMPARISON TABLE ===
+
+  Output 2 [display_data]:
+    Data keys: ['text/plain', 'text/html', 'application/vnd.google.colaboratory.intrinsic+json']
+    text/plain:                            Model / Experiment  Accuracy  Class 0 Prec  \
+0  Transformer (bert-base-multilingual-cased)    0.8220        0.8659   
+1       Hybrid Model (TF-IDF + Urdu Features)    0.8202        0.8480   
+2              Ablation: Combined Word + Char    0.8129        0.8378   
+3               Ablation: Char N-grams (3-5g)    0.8115        0.8294   
+4               Ablation: Text WITHOUT Emojis    0.8097        0.8390   
+5             Logistic Regression (Word 1-2g)    0.8102       
+  Output 3 [display_data]:
+    Data keys: ['text/plain', 'image/png']
+    text/plain: <Figure size 1200x600 with 1 Axes>
+    [IMAGE PNG present, base64 length: 99041]
+  Output 4 [display_data]:
+    Data keys: ['text/plain', 'image/png']
+    text/plain: <Figure size 1600x1000 with 6 Axes>
+    [IMAGE PNG present, base64 length: 106909]
+
+=========================================
+CELL 21 [markdown]: ## Section 10: In-Depth Qualitative Error Analysis (10+ Detailed Case Studies)
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 10: In-Depth Qualitative Error Analysis (10+ Detailed Case Studies)
+
+### Linguistic Categorization of Urdu Social-Media Sarcasm Errors
+Sarcasm detection errors in social media are rarely random noise; they reflect deep linguistic, pragmatic, and cultural challenges in natural language understanding. As required by the assignment guidelines, we categorize and dissect **at least 10 concrete misclassified examples** across seven key linguistic phenomena:
+
+1. **Irony & World-Knowledge / C
+...(truncated)
+
+=========================================
+CELL 22 [code]: # =============================================================================
+=========================================
+Outputs count: 1
+  Output 1 [stream]:
+=== ERROR DISTRIBUTION SUMMARY ===
+Total Test Samples:  2,186
+Total Errors:        393 (17.98%)
+False Positives (Predicted Sarcastic, Actually Non-Sarcastic): 195
+False Negatives (Predicted Non-Sarcastic, Actually Sarcastic): 198
+
+
+=========================================
+CELL 23 [markdown]: ### Qualitative Case Studies: Detailed Linguistic Dissection (12 Examples)
+=========================================
+--- MARKDOWN CONTENT ---
+### Qualitative Case Studies: Detailed Linguistic Dissection (12 Examples)
+
+Below is an exhaustive linguistic analysis of 12 representative failure cases, covering all phenomena specified in the assignment rubric:
+
+---
+
+#### Case Study 1: Real-World Political Irony & Context Blindness (False Negative)
+- **Urdu Text:** `مراد علی شاہ کے بھیس میں ڈی جی آئی ایس آئی تھے حامد میر😁`
+- **English Translation:** *"Hamid Mir says it was the DG ISI in the disguise of Murad Ali Shah 😁"*
+- **Ground Truth:** `
+...(truncated)
+
+=========================================
+CELL 24 [markdown]: ## Section 11: Graduate-Level Research Report & Submission Synthesis
+=========================================
+--- MARKDOWN CONTENT ---
+## Section 11: Graduate-Level Research Report & Submission Synthesis
+
+### 1. Problem Formulation & Task Specification
+This investigation addressed binary text classification of Urdu social-media text into Sarcastic (`1`) versus Non-Sarcastic (`0`) classes using the provided ~20,000 post dataset. Sarcasm in Urdu is computationally challenging due to non-standard orthography, morphological complexity, dialectal variation, and subtle pragmatic irony.
+
+### 2. Preprocessing & Sarcasm Cue Justificatio
+...(truncated)

@@ -1,0 +1,74 @@
+=== RAW DATASET INFO ===
+Shape: (20060, 8)
+Columns: ['urdu_text', 'is_sarcastic', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7']
+Missing urdu_text: 105
+Missing is_sarcastic: 56
+
+Unnamed: 2: 0 non-null entries.
+Unnamed: 3: 0 non-null entries.
+Unnamed: 4: 0 non-null entries.
+Unnamed: 5: 0 non-null entries.
+Unnamed: 6: 17 non-null entries.
+Unnamed: 7: 38 non-null entries.
+
+=== CLEANED DATASET INFO ===
+Cleaned Shape: (19955, 8)
+Class counts:
+is_sarcastic
+0    9993
+1    9962
+Class percentages:
+is_sarcastic
+0    50.077675
+1    49.922325
+
+Duplicate urdu_text count: 4142
+Exact duplicate rows count: 3544
+Texts with conflicting labels (same text labeled both 0 and 1): 597
+
+=== TEXT LENGTH STATISTICS ===
+           char_len    word_count
+count  19955.000000  19955.000000
+mean      90.855224     19.585367
+std       60.784170     12.787837
+min        2.000000      1.000000
+25%       47.000000     10.000000
+50%       79.000000     17.000000
+75%      118.000000     25.000000
+max      327.000000     71.000000
+
+=== LENGTH STATS BY CLASS ===
+Sarcastic (1):
+          char_len   word_count
+count  9962.000000  9962.000000
+mean    107.660209    23.091448
+std      57.872549    12.175694
+min       5.000000     1.000000
+25%      67.000000    15.000000
+50%      97.000000    21.000000
+75%     129.000000    28.000000
+max     304.000000    71.000000
+Non-Sarcastic (0):
+          char_len   word_count
+count  9993.000000  9993.000000
+mean     74.102372    16.090163
+std      58.968219    12.421981
+min       2.000000     1.000000
+25%      31.000000     7.000000
+50%      60.000000    13.000000
+75%      98.000000    21.000000
+max     327.000000    70.000000
+
+=== SAMPLE SARCASTIC ROWS ===
+[0] 🤣😂😂 ہو لینے دے میری شادی فسادن ٹھیک ہے کوجی نہیں چاہیے 😐😐😐🤣
+[1] چل مہمانوں میں کھانا سرو کر چڑیل چاچی نوں دسدی آں میں😂😂
+[4]  `` مراد علی شاہ کے بھیس میں ڈی جی آئی ایس آئی تھے '' حامد میر😁
+[5]  قابل اعتبار ہی اکثر قاتل اعتبار ہوتے ہیں 💔🔥
+[8] یار وچارہ ویلا ہوندا ہے اس آرے لگا ہویا ہے😂😂 تسی تے پکے نجومی ہو اسی منندے ہاں
+
+=== SAMPLE NON-SARCASTIC ROWS ===
+[2] کامران خان آپکی دن بھریہ زمہ داری لگائی گئی اپوزیشن کی کردار کشی اوراس پربھونکناہےآپ خوشامدگری وچاپلوسی سےاورکتنی دولت کماناچاہتےہیں موٹرسائیکل سےپیجارو پراڈو تک کےسفرمیں ضمیرکی لاش سےاٹھتی بدبوآپ کی ناک بند نہیں کرتی ہے 🙏نوٹ آپ سب سےالتجاگزارش ہےہمیں بھی فالوکریں شکریہ
+[3] نہیں پائین 😎
+[6] انساں کو تھکا دیتا ہے سوچوں کا سفر بھی ... 🍁🥀
+[7] حامد میر صاحب ویلڈن👏😊
+[10] تسی لڑاںٔی کروانی ساڈی کی 😂😂😂

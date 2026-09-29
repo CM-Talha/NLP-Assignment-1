@@ -1,0 +1,48 @@
+--- CELL 7 CODE (lines 95 to 115) ---
+095: '        # 3. Strip Aerab (Diacritics)'
+096: '        if self.strip_aerab:'
+097: "            text = self.aerab_pattern.sub('', text)"
+098: ''
+099: '        # 4. Character Elongation Compression (reduces کدووووو to کدوو)'
+100: '        if self.compress_elongations:'
+101: "            text = re.sub(r'(.)\\1{2,}', r'\\1\\1', text)"
+102: ''
+103: '        # 5. Emoji Handling'
+104: '        if self.remove_emojis:'
+105: "            text = EMOJI_PATTERN.sub('', text)"
+106: '        else:'
+107: '            text = EMOJI_PATTERN.sub(lambda m: f" {m.group(0)} ", text)'
+108: ''
+109: '        # 6. Punctuation Padding'
+110: '        if self.pad_punctuation:'
+111: '            text = re.sub(r\'([!؟?.,،۔()"\'])\', r\' \\1 \', text)'
+112: ''
+113: '        # 7. Collapse Whitespace'
+114: "        text = re.sub(r'\\s+', ' ', text).strip()"
+115: '        return text'
+116: ''
+117: '    def __call__(self, text: str) -> str:'
+118: '        return self.normalize(text)'
+
+--- CELL 11 CODE (lines 45 to 65) ---
+045: '            # 3. Sentiment Incongruity'
+046: '            incongruity = 1.0 if (praise_count > 0 and (mock_count > 0 or irony_count > 0)) else 0.0'
+047: '            '
+048: '            # 4. Elongations'
+049: "            elongations = len(re.findall(r'(.)\\1{2,}', text_str))"
+050: '            '
+051: '            # 5. Punctuation Indicators'
+052: "            exclamations = text_str.count('!')"
+053: "            questions = text_str.count('?') + text_str.count('؟')"
+054: "            ellipsis = len(re.findall(r'\\.{2,}|۔{2,}', text_str))"
+055: "            repeated_punct = len(re.findall(r'[!?؟]{2,}', text_str))"
+056: '            quotes = len(re.findall(r\'["\'«»“”]\', text_str))'
+057: '            '
+058: '            # 6. Code-mixing ratio'
+059: "            latin_chars = len(re.findall(r'[a-zA-Z]', text_str))"
+060: '            code_mix_ratio = latin_chars / max(1, char_len)'
+061: '            '
+062: '            # 7. Structural metrics'
+063: '            avg_word_len = char_len / word_count'
+064: '            '
+065: '            features.append(['
