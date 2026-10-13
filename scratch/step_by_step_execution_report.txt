@@ -1,0 +1,349 @@
+================================================================================
+COMPREHENSIVE STEP-BY-STEP EXECUTION & PERFORMANCE AUDIT
+================================================================================
+
+
+>>> # DS5007 — Natural Language Processing (Fall 2026) (Cell 1) <<<
+
+
+>>> ## Section 1: Hardware Environment, Reproducibility & Robust Data Loading (Cell 2) <<<
+
+--- Code Cell 3 (94 lines) ---
+STDOUT / LOGS:
+=== 1. SYSTEM & DEPENDENCY AUDIT ===
+Python Version:       3.13.15
+PyTorch Version:      2.11.0+cu128
+Transformers Version: 5.16.1
+Scikit-Learn Version: 1.6.1
+Pandas Version:       2.2.3
+NumPy Version:        2.1.3
+
+CUDA Accelerator Active: Tesla T4
+Compute Capability:       (7, 5)
+Allocated VRAM:           0.00 MB
+Reserved VRAM:            0.00 MB
+Global seed fixed to: 42
+
+--- Code Cell 4 (48 lines) ---
+STDOUT / LOGS:
+[Tier 2] Checking Google Drive mount...
+[Tier 3] 'urdu_sarcastic_dataset.csv' not found locally.
+TIP: You can also drag & drop 'urdu_sarcastic_dataset.csv' directly into Colab's left Files panel!
+Please upload via the widget below:
+Saving urdu_sarcastic_dataset.csv to urdu_sarcastic_dataset.csv
+Uploaded: urdu_sarcastic_dataset.csv
+
+Raw Dataset Ingested. Shape: (20060, 8)
+Raw Columns: ['urdu_text', 'is_sarcastic', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7']
+
+DATA / TABLES / PLOTS:
+<IPython.core.display.HTML object>
+
+
+>>> ## Section 2: Rigorous Exploratory Data Analysis (EDA) & Data Sanitization (Cell 5) <<<
+
+--- Code Cell 6 (97 lines) ---
+STDOUT / LOGS:
+=== 1. DATA AUDIT & SANITIZATION ===
+Raw Entry Count:     20,060
+Missing 'urdu_text':   105
+Missing 'is_sarcastic':56
+  Spurious column 'Unnamed: 2': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 3': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 4': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 5': 0 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 6': 17 non-null artifacts (unescaped CSV commas in tweet bodies)
+  Spurious column 'Unnamed: 7': 38 non-null artifacts (unescaped CSV commas in tweet bodies)
+
+Valid Sanitized Rows: 19,955
+Raw Label Counts:
+is_sarcastic
+0    9993
+1    9962
+
+=== 2. DUPLICATE & ANNOTATION CONFLICT ANALYSIS ===
+Total rows:               19,955
+Unique Urdu text strings: 15,214
+Duplicate occurrences:   4,741 (23.76%)
+Texts with conflicting annotations (labeled both 0 and 1): 646
+Final Deduplicated Dataset Size: 14,568 posts
+Non-Sarcastic (0): 8,661 (59.45%)
+Sarcastic (1):     5,907 (40.55%)
+
+=== 3. TEXT LENGTH METRICS ===
+=== 4. PROTOTYPICAL TEXT EXAMPLES ===
+
+--- PROTOTYPICAL SARCASTIC EXAMPLES (1) ---
+[1] اتنی عزت تو کبھی مریم نے کپٹن صفدر کو نہیں دی جتنی بلاول دے رہا ہے 😏 (Chars: 68, Words: 17)
+[2] سندھ پولیس شائد مہنگائی کی وجہ سے ہی چھٹی پر چلی گئی ھے۔ دفتر آنے جانے کا خرچہ بچاکر گزارہ ہو جاے گا۔ 🙏😃 (Chars: 104, Words: 24)
+[3] بلاول کو سبزیوں کے ریٹ کا کیا پتہ؟ اُسے تو کھیرا مولی گاجر سب فری میں مل جاتا ہے 😁 (Chars: 82, Words: 20)
+
+--- PROTOTYPICAL NON-SARCASTIC EXAMPLES (0) ---
+[1] نہیں پائین 😎 (Chars: 12, Words: 3)
+[2] انساں کو تھکا دیتا ہے سوچوں کا سفر بھی ... 🍁🥀 (Chars: 45, Words: 11)
+[3] حامد میر صاحب ویلڈن👏😊 (Chars: 21, Words: 4)
+
+DATA / TABLES / PLOTS:
+             char_count                    word_count                  
+                   mean    std median  max       mean    std median max
+is_sarcastic                                                           
+0                 71.56  58.54   56.0  327      15.67  12.50   12.0  70
+1                112.76  62.65  101.0  304      23.93  13.06   21.0  71
+<Figure size 1800x500 with 3 Axes>
+
+
+>>> ## Section 3: Stratified Splitting & Urdu-Aware Preprocessing (Cell 7) <<<
+
+--- Code Cell 8 (133 lines) ---
+STDOUT / LOGS:
+=== STRATIFIED DATA SPLIT AUDIT ===
+Train Partition:      10,197 samples (70.0%) | Sarcasm Ratio: 0.4055
+Validation Partition: 2,185 samples (15.0%) | Sarcasm Ratio: 0.4055
+Test Partition:       2,186 samples (15.0%) | Sarcasm Ratio: 0.4053
+Zero cross-split data leakage verified.
+Applying Urdu-aware preprocessing across all partitions...
+Preprocessing completed in 0.42 seconds.
+Cleaned Train: 10,197 | Val: 2,185 | Test: 2,186
+
+
+>>> ## Section 4: Classical Baseline Models (TF-IDF + ML Classifiers) (Cell 9) <<<
+
+--- Code Cell 10 (69 lines) ---
+STDOUT / LOGS:
+Fitting TF-IDF Word Vectorizer (1-2 n-grams)...
+Vocabulary Dimension: 12,000 features
+
+==========================================
+ EVALUATION SUMMARY: Multinomial Naive Bayes (Word 1-2g)
+==========================================
+Overall Accuracy:  0.7928
+Primary Macro-F1:  0.7802
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8006, Recall=0.8677, F1=0.8328
+Class 1 (Sarcastic):     Precision=0.7786, Recall=0.6828, F1=0.7276
+------------------------------------------
+Confusion Matrix: [TN=1128, FP= 172] | [FN= 281, TP= 605]
+==========================================
+
+
+==========================================
+ EVALUATION SUMMARY: Logistic Regression (Word 1-2g)
+==========================================
+Overall Accuracy:  0.8102
+Primary Macro-F1:  0.7994
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8177, Recall=0.8762, F1=0.8459
+Class 1 (Sarcastic):     Precision=0.7970, Recall=0.7133, F1=0.7528
+------------------------------------------
+Confusion Matrix: [TN=1139, FP= 161] | [FN= 254, TP= 632]
+==========================================
+
+
+==========================================
+ EVALUATION SUMMARY: Linear SVC (Word 1-2g)
+==========================================
+Overall Accuracy:  0.8051
+Primary Macro-F1:  0.7979
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8367, Recall=0.8354, F1=0.8360
+Class 1 (Sarcastic):     Precision=0.7590, Recall=0.7607, F1=0.7599
+------------------------------------------
+Confusion Matrix: [TN=1086, FP= 214] | [FN= 212, TP= 674]
+==========================================
+
+
+
+>>> ## Section 5: Bonus Feature Engineering (Handcrafted Urdu Linguistic & Stylistic Features) (Cell 11) <<<
+
+--- Code Cell 12 (101 lines) ---
+STDOUT / LOGS:
+Constructing and fitting Hybrid Feature Union...
+Combined Feature Matrix Shape: (10197, 18017)
+
+==========================================
+ EVALUATION SUMMARY: Hybrid Model (TF-IDF + Urdu Features)
+==========================================
+Overall Accuracy:  0.8202
+Primary Macro-F1:  0.8134
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8480, Recall=0.8500, F1=0.8490
+Class 1 (Sarcastic):     Precision=0.7792, Recall=0.7765, F1=0.7778
+------------------------------------------
+Confusion Matrix: [TN=1105, FP= 195] | [FN= 198, TP= 688]
+==========================================
+
+Bonus Feature Engineering Performance Delta:
+  Baseline LinearSVC Macro-F1: 0.7979
+  Hybrid Model Macro-F1:       0.8134
+  Empirical Improvement:       +1.55% Macro-F1 points
+
+
+>>> ## Section 6: Deep Neural Architecture (PyTorch BiLSTM with Multi-Head Attention) (Cell 13) <<<
+
+--- Code Cell 14 (187 lines) ---
+STDOUT / LOGS:
+PyTorch Vocabulary: 9,259 unique tokens (min_freq=2)
+Training BiLSTM for 6 epochs on cuda...
+Epoch 01/06 | Train Loss: 0.5797 | Val Macro-F1: 0.7142
+Epoch 02/06 | Train Loss: 0.4943 | Val Macro-F1: 0.7052
+Epoch 03/06 | Train Loss: 0.4368 | Val Macro-F1: 0.7731
+Epoch 04/06 | Train Loss: 0.3837 | Val Macro-F1: 0.7826
+Epoch 05/06 | Train Loss: 0.3447 | Val Macro-F1: 0.7760
+Epoch 06/06 | Train Loss: 0.3211 | Val Macro-F1: 0.7797
+Restored best BiLSTM model with Val Macro-F1: 0.7826
+
+==========================================
+ EVALUATION SUMMARY: PyTorch BiLSTM with Attention
+==========================================
+Overall Accuracy:  0.8079
+Primary Macro-F1:  0.7970
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8161, Recall=0.8738, F1=0.8440
+Class 1 (Sarcastic):     Precision=0.7935, Recall=0.7111, F1=0.7500
+------------------------------------------
+Confusion Matrix: [TN=1136, FP= 164] | [FN= 256, TP= 630]
+==========================================
+
+
+
+>>> ## Section 7: Pretrained Transformer Experiment (Fine-Tuning Multilingual BERT / Urdu RoBERTa) (Cell 15) <<<
+
+--- Code Cell 16 (135 lines) ---
+STDOUT / LOGS:
+Loading Pretrained Tokenizer: bert-base-multilingual-cased...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Tokenizing train, val, and test splits for Transformer...
+Instantiating bert-base-multilingual-cased for binary classification...
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: bert-base-multilingual-cased
+Key                                        | Status     | 
+-------------------------------------------+------------+-
+cls.predictions.transform.dense.weight     | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.bias                       | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
+classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Fine-tuning Transformer on cuda (2 epochs, lr=2e-05)...
+  Epoch 01 | Step 0079/0319 | Batch Loss: 0.5319
+  Epoch 01 | Step 0158/0319 | Batch Loss: 0.5022
+  Epoch 01 | Step 0237/0319 | Batch Loss: 0.5186
+  Epoch 01 | Step 0316/0319 | Batch Loss: 0.4195
+--> Epoch 01 Complete | Val Macro-F1: 0.7852
+  Epoch 02 | Step 0079/0319 | Batch Loss: 0.3060
+  Epoch 02 | Step 0158/0319 | Batch Loss: 0.4679
+  Epoch 02 | Step 0237/0319 | Batch Loss: 0.3372
+  Epoch 02 | Step 0316/0319 | Batch Loss: 0.5061
+--> Epoch 02 Complete | Val Macro-F1: 0.7956
+Best Transformer checkpoint restored (Val Macro-F1: 0.7956)
+
+==========================================
+ EVALUATION SUMMARY: Transformer (bert-base-multilingual-cased)
+==========================================
+Overall Accuracy:  0.8220
+Primary Macro-F1:  0.8171
+------------------------------------------
+Class 0 (Non-Sarcastic): Precision=0.8659, Recall=0.8292, F1=0.8472
+Class 1 (Sarcastic):     Precision=0.7641, Recall=0.8115, F1=0.7871
+------------------------------------------
+Confusion Matrix: [TN=1078, FP= 222] | [FN= 167, TP= 719]
+==========================================
+
+
+DATA / TABLES / PLOTS:
+config.json:   0%|          | 0.00/625 [00:00<?, ?B/s]
+tokenizer_config.json:   0%|          | 0.00/49.0 [00:00<?, ?B/s]
+vocab.txt:   0%|          | 0.00/996k [00:00<?, ?B/s]
+tokenizer.json:   0%|          | 0.00/1.96M [00:00<?, ?B/s]
+model.safetensors: reconstructing file:   0%|          |  0.00B /  714MB            
+model.safetensors: downloading bytes:           |  0.00B            
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]
+
+
+>>> ## Section 8: Systematic Ablation Study (Cell 17) <<<
+
+--- Code Cell 18 (63 lines) ---
+STDOUT / LOGS:
+=== ABLATION 1: EMOJI IMPACT EXPERIMENT ===
+Results of Emoji Ablation:
+  With Emojis Preserved Macro-F1:    0.7979
+  Without Emojis (Stripped) Macro-F1: 0.8025
+  Empirical Delta:                  -0.0045 Macro-F1 points
+
+=== ABLATION 2: WORD VS. CHARACTER VS. COMBINED N-GRAMS ===
+Word (1-2g) Macro-F1:          0.7979
+Char (3-5g) Macro-F1:          0.8027
+Combined Word + Char Macro-F1: 0.8053
+
+=== ABLATION 3: RAW UNNORMALIZED VS. URDU NORMALIZED TEXT ===
+Raw Unnormalized Text Macro-F1: 0.7969
+Urdu Normalized Text Macro-F1:   0.7979
+Empirical Delta:                 +0.0011 Macro-F1 points
+
+
+>>> ## Section 9: Master Evaluation & Comparative Results Synthesis (Cell 19) <<<
+
+--- Code Cell 20 (77 lines) ---
+STDOUT / LOGS:
+=== MASTER PERFORMANCE COMPARISON TABLE ===
+
+DATA / TABLES / PLOTS:
+                           Model / Experiment  Accuracy  Class 0 Prec  \
+0  Transformer (bert-base-multilingual-cased)    0.8220        0.8659   
+1       Hybrid Model (TF-IDF + Urdu Features)    0.8202        0.8480   
+2              Ablation: Combined Word + Char    0.8129        0.8378   
+3               Ablation: Char N-grams (3-5g)    0.8115        0.8294   
+4               Ablation: Text WITHOUT Emojis    0.8097        0.8390   
+5             Logistic Regression (Word 1-2g)    0.8102        0.8177   
+6                      Linear SVC (Word 1-2g)    0.8051        0.8367   
+7               PyTorch BiLSTM with Attention    0.8079        0.8161   
+8             Ablation: Raw Unnormalized Text    0.8042        0.8349   
+9         Multinomial Naive Bayes (Word 1-2g)    0.7928        0.8006   
+
+   Class 0 Recall  Class 0 F1  Class 1 Prec  Class 1 Recall  Class 1 F1  \
+0          0.8292      0.8472        0.7641          0.8115      0.7871   
+1          0.8500      0.8490        0.7792          0.7765      0.7778   
+2          0.8500      0.8438        0.7751          0.7585      0.7667   
+3          0.8600      0.8444        0.7828          0.7404      0.7610   
+4          0.8415      0.8402        0.7664          0.7630      0.7647   
+5          0.8762      0.8459        0.7970          0.7133      0.7528   
+6          0.8354      0.8360        0.7590          0.7607      0.7599   
+7          0.8738      0.8440        0.7935          0.7111      0.7500   
+8          0.8362      0.8355        0.7590          0.7573      0.7582   
+9          0.8677      0.8328        0.7786          0.6828      0.7276   
+
+   Macro-F1  
+0    0.8171  
+1    0.8134  
+2    0.8053  
+3    0.8027  
+4    0.8025  
+5    0.7994  
+6    0.7979  
+7    0.7970  
+8    0.7969  
+9    0.7802  
+<Figure size 1200x600 with 1 Axes>
+<Figure size 1600x1000 with 6 Axes>
+
+
+>>> ## Section 10: In-Depth Qualitative Error Analysis (10+ Detailed Case Studies) (Cell 21) <<<
+
+--- Code Cell 22 (24 lines) ---
+STDOUT / LOGS:
+=== ERROR DISTRIBUTION SUMMARY ===
+Total Test Samples:  2,186
+Total Errors:        393 (17.98%)
+False Positives (Predicted Sarcastic, Actually Non-Sarcastic): 195
+False Negatives (Predicted Non-Sarcastic, Actually Sarcastic): 198
+
+
+>>> ## Section 11: Graduate-Level Research Report & Submission Synthesis (Cell 24) <<<
+

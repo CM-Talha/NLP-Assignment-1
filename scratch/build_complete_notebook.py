@@ -1486,16 +1486,18 @@ Below is an exhaustive linguistic analysis of 12 representative failure cases, c
 This investigation addressed binary text classification of Urdu social-media text into Sarcastic (`1`) versus Non-Sarcastic (`0`) classes using the provided ~20,000 post dataset. Sarcasm in Urdu is computationally challenging due to non-standard orthography, morphological complexity, dialectal variation, and subtle pragmatic irony.
 
 ### 2. Preprocessing & Sarcasm Cue Justification
-Contrary to standard NLP workflows where emojis, punctuation, and repetition are stripped as noise, we demonstrated that in Urdu sarcasm detection:
-- **Emojis are primary carriers of tone:** Stripping emojis resulted in a substantial drop in Macro-F1 across all models.
-- **Character Normalization is critical:** Unifying Arabic/Urdu Unicode variants (`ی/ي/ے`, `ک/ك`, `ہ/ۂ/ة`) and stripping diacritics (Aerab) reduced vocabulary fragmentation without losing semantic information.
+Contrary to standard NLP workflows where emojis, punctuation, and repetition are stripped as noise, our investigation revealed key empirical behaviors in Urdu sarcasm detection:
+- **Emojis Require Contextual / Incongruity Modeling:** In shallow bag-of-words (pure LinearSVC), stripping uncontextualized emojis yielded a negligible shift ($F_1 = 0.8025$ vs $0.7979$) because laughing emojis (`😂`, `🤣`) appear frequently across both genuine humor and sarcastic mockery. However, when emojis were structured into explicit **Sentiment-Incongruity Interaction Features** (praise words + laughing/crying emojis), performance jumped to **0.8134 Macro-F1 (+1.55% gain)**. Furthermore, the contextual Transformer (mBERT) attended dynamically to emojis within text context, achieving the highest overall Macro-F1 ($0.8171$).
+- **Character Normalization is critical:** Unifying Arabic/Urdu Unicode variants (`ی/ي/ے`, `ک/ك`, `ہ/ۂ/ة`) and stripping diacritics (Aerab) reduced vocabulary fragmentation without losing semantic information, contributing a positive +0.11% gain.
 - **Elongation compression retains cues:** Compressing repetitions (`کدووووو` $\\rightarrow$ `کدوو`) restrained vocabulary size while preserving the emotional emphasis signal.
+- **Subword / Character Granularity Dominates Word Tokens:** Character n-grams ($F_1 = 0.8027$) and combined Word+Char n-grams ($F_1 = 0.8053$) substantially outperformed pure Word n-grams ($F_1 = 0.7979$), demonstrating the necessity of capturing Urdu inflectional clitics and dialectal spelling variations.
 
 ### 3. Empirical Findings & Model Rankings
-1. **Classical Baselines:** Linear SVC ($F_1 \\approx 0.801$) and Logistic Regression ($F_1 \\approx 0.796$) outperformed Multinomial Naive Bayes ($F_1 \\approx 0.777$), demonstrating that discriminative hyperplanes better separate subtle lexical boundaries than generative unigram counts.
-2. **Handcrafted Urdu Feature Engineering (Bonus Marks):** Adding our 17-dimensional linguistic vector (cue phrases, emoji incongruity, punctuation intensity, elongation, code-mixing) boosted the Linear SVC by **+1.2% Macro-F1 points**, proving the value of domain-specific feature engineering.
-3. **PyTorch BiLSTM with Attention:** The attention mechanism successfully focused on laughing emojis and sarcastic rhetorical markers, outperforming static bag-of-words models.
-4. **Pretrained Transformer:** Contextual representations from Multilingual BERT achieved the highest overall Macro-F1 and per-class recall by resolving bidirectional context and bilingual code-mixing.
+1. **Pretrained Transformer (mBERT):** Rank 1 (Macro-F1: **0.8171**, Accuracy: **82.20%**). Pretrained contextual representations resolve bidirectional context, polysemous sarcasm markers, and English/Roman Urdu code-mixing, yielding the highest Sarcastic Class Recall (**81.15%**) and lowest False Negatives (167).
+2. **Handcrafted Urdu Feature Engineering (Bonus Marks):** Rank 2 (Macro-F1: **0.8134**, Accuracy: **82.02%**). Combining 12k TF-IDF n-grams with our 17-dimensional linguistic vector (rhetorical cues, emoji categories, sentiment incongruity, elongation, punctuation intensity, code-mixing) yielded a **+1.55% Macro-F1 boost** over the baseline LinearSVC, earning bonus marks.
+3. **Combined Word + Char N-Grams:** Rank 3 (Macro-F1: **0.8053**, Accuracy: **81.29%**). Proves that combining character-level morphological clitics with word semantics elevates classical linear models.
+4. **Classical Linear Baselines:** Logistic Regression ($F_1 = 0.7994$) and Linear SVC ($F_1 = 0.7979$) outperformed Multinomial Naive Bayes ($F_1 = 0.7802$), showing that discriminative hyperplanes better separate subtle lexical boundaries than generative independence assumptions.
+5. **PyTorch BiLSTM with Attention:** (Macro-F1: **0.7970**, Accuracy: **80.79%**). Bahdanau self-attention effectively weights sarcastic punchlines and closing emojis. However, training recurrent embeddings from scratch on 10k Urdu samples limits capacity compared to massive multilingual pretraining in mBERT.
 
 ### 4. Key Limitations & Future Directions
 - **Context Blindness:** Models cannot detect sarcasm dependent on external political events or news without integration of dynamic knowledge graphs or retrieval-augmented generation (RAG).
@@ -1504,7 +1506,7 @@ Contrary to standard NLP workflows where emojis, punctuation, and repetition are
 
 ---
 ### Course Deliverables Checklist:
-- [x] Complete, runnable, end-to-end Jupyter Notebook (`Urdu_sarcasm.ipynb`).
+- [x] Complete, runnable, end-to-end Jupyter Notebooks (`NLP_Assignment_1_Sarcastic_Urdu_Data.ipynb` & `Urdu_sarcasm.ipynb`).
 - [x] Rigorous Exploratory Data Analysis with class balance and text-length distributions.
 - [x] Justified Urdu-aware preprocessing preserving emojis, punctuation, and elongation.
 - [x] Classical TF-IDF baselines (Naive Bayes, Logistic Regression, Linear SVC).
@@ -1513,8 +1515,8 @@ Contrary to standard NLP workflows where emojis, punctuation, and repetition are
 - [x] Systematic 3-part Ablation Study (emojis, n-gram granularity, normalization).
 - [x] Full evaluation: Accuracy, Per-Class Precision/Recall/F1, Macro-F1, Confusion Matrices.
 - [x] In-depth Error Analysis of 12 categorized misclassified examples.
-- [x] Handcrafted Urdu Feature Engineering for Bonus Marks.
-- [x] Embedded graduate-level research report.""")
+- [x] Handcrafted Urdu Feature Engineering for Bonus Marks (+1.55% Macro-F1 gain).
+- [x] Comprehensive 3-page research report (`DS5007_NLP_Assignment_1_Report.pdf`).""")
 
     return {
         "cells": cells,
