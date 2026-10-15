@@ -8,7 +8,38 @@ from fastmcp import Client
 from colab_mcp.session import ColabTransport
 from colab_mcp.websocket_server import ColabWebSocketServer, COLAB, SCRATCH_PATH
 
-CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+import shutil
+
+def get_chrome_executable():
+    """Detects Google Chrome binary across macOS, Windows, and Linux."""
+    # macOS standard application paths
+    mac_paths = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+    ]
+    for p in mac_paths:
+        if os.path.exists(p):
+            return p
+
+    # Windows standard paths
+    win_paths = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe")
+    ]
+    for p in win_paths:
+        if os.path.exists(p):
+            return p
+
+    # Linux / System PATH
+    for cmd in ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]:
+        found = shutil.which(cmd)
+        if found:
+            return found
+
+    return None
+
+CHROME_PATH = get_chrome_executable()
 
 async def run_colab_workflow():
     print("=" * 70, flush=True)
@@ -26,7 +57,7 @@ async def run_colab_workflow():
         print(f"[3] Launching Google Colab session URL directly in Chrome:\n    {colab_url}\n", flush=True)
         
         # Launch Chrome directly with quoted URL to prevent Windows '&' stripping
-        if os.path.exists(CHROME_PATH):
+        if CHROME_PATH and os.path.exists(CHROME_PATH):
             subprocess.Popen([CHROME_PATH, colab_url])
         else:
             import webbrowser

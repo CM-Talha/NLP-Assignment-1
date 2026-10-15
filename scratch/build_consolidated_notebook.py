@@ -874,7 +874,7 @@ def train_bilstm_model(model, train_loader, val_loader, epochs: int = 6, lr: flo
         
         if val_macro_f1 > best_val_f1:
             best_val_f1 = val_macro_f1
-            best_model_state = model.state_dict().copy()
+            best_model_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             torch.save(best_model_state, 'best_bilstm_model.pt')
             
     if best_model_state is not None:
@@ -1025,7 +1025,7 @@ def train_transformer_classifier(model, train_loader, val_loader, epochs: int = 
         
         if val_macro_f1 > best_val_f1:
             best_val_f1 = val_macro_f1
-            best_state = model.state_dict().copy()
+            best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             torch.save(best_state, 'best_transformer_model.pt')
             
     if best_state is not None:
@@ -1085,7 +1085,7 @@ prep_no_emojis = UrduPreprocessor(remove_emojis=True)
 X_train_no_emoji = X_train.apply(prep_no_emojis).tolist()
 X_test_no_emoji = X_test.apply(prep_no_emojis).tolist()
 
-vec_emoji_ablation = TfidfVectorizer(ngram_range=(1, 2), max_features=10000, sublinear_tf=True)
+vec_emoji_ablation = TfidfVectorizer(ngram_range=(1, 2), max_features=12000, sublinear_tf=True)
 X_train_no_emoji_vec = vec_emoji_ablation.fit_transform(X_train_no_emoji)
 X_test_no_emoji_vec = vec_emoji_ablation.transform(X_test_no_emoji)
 
@@ -1128,7 +1128,7 @@ print(f"Char (3-5g) Macro-F1:          {metrics_char['Macro-F1']:.4f}")
 print(f"Combined Word + Char Macro-F1: {metrics_wc['Macro-F1']:.4f}")
 
 print("\\n=== ABLATION 3: RAW UNNORMALIZED VS. URDU NORMALIZED TEXT ===")
-raw_vec = TfidfVectorizer(ngram_range=(1, 2), max_features=10000, sublinear_tf=True)
+raw_vec = TfidfVectorizer(ngram_range=(1, 2), max_features=12000, sublinear_tf=True)
 X_train_raw_vec = raw_vec.fit_transform(X_train)
 X_test_raw_vec = raw_vec.transform(X_test)
 

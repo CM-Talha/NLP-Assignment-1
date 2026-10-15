@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch and Hugging Face model checkpoints
+*.pt
+*.pth
+*.bin
+*.safetensors
+best_bilstm_model.pt
+best_transformer_model.pt
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# macOS artifacts
+.DS_Store
+
+# IDE configs
+.vscode/
+.idea/
+
+# Local build / test artifacts
+scratch/test.pdf
+scratch/test.html
