@@ -64,8 +64,8 @@ from sklearn.metrics import (
   [Output 1: stream]
     === 1. SYSTEM & DEPENDENCY AUDIT ===
 Python Version:       3.13.15
-PyTorch Version:      2.11.0+cu128
-Transformers Version: 5.16.1
+PyTorch Version:      2.11.0+cu130
+Transformers Version: 5.18.0
 Scikit-Learn Version: 1.6.1
 Pandas Version:       2.2.3
 NumPy Version:        2.1.3
@@ -111,18 +111,9 @@ def load_urdu_dataset(filename: str = DATA_FILENAME) -> pd.DataFrame:
         if os.path.exists(drive_path):
             return pd.read_
 
---- OUTPUTS (3 items) ---
+--- OUTPUTS (1 items) ---
   [Output 1: stream]
-    [Tier 2] Checking Google Drive mount...
-[Tier 3] 'urdu_sarcastic_dataset.csv' not found locally.
-TIP: You can also drag & drop 'urdu_sarcastic_dataset.csv' directly into Colab's left Files panel!
-Please upload via the widget below:
-
-  [Output 2: display_data]
-    text/plain: <IPython.core.display.HTML object>
-  [Output 3: stream]
-    Saving urdu_sarcastic_dataset.csv to urdu_sarcastic_dataset.csv
-Uploaded: urdu_sarcastic_dataset.csv
+    [Tier 1] Located dataset at: urdu_sarcastic_dataset.csv
 
 Raw Dataset Ingested. Shape: (20060, 8)
 Raw Columns: ['urdu_text', 'is_sarcastic', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7']
@@ -264,7 +255,7 @@ Validation Partition: 2,185 samples (15.0%) | Sarcasm Ratio: 0.4055
 Test Partition:       2,186 samples (15.0%) | Sarcasm Ratio: 0.4053
 Zero cross-split data leakage verified.
 Applying Urdu-aware preprocessing across all partitions...
-Preprocessing completed in 0.42 seconds.
+Preprocessing completed in 0.48 seconds.
 Cleaned Train: 10,197 | Val: 2,185 | Test: 2,186
 
 
@@ -464,13 +455,13 @@ Restored best BiLSTM model with Val Macro-F1: 0.7826
 ==========================================
  EVALUATION SUMMARY: PyTorch BiLSTM with Attention
 ==========================================
-Overall Accuracy:  0.8079
-Primary Macro-F1:  0.7970
+Overall Accuracy:  0.8028
+Primary Macro-F1:  0.7912
 ------------------------------------------
-Class 0 (Non-Sarcastic): Precision=0.8161, Recall=0.8738, F1=0.8440
-Class 1 (Sarcastic):     Precision=0.7935, Recall=0.7111, F1=0.7500
+Class 0 (Non-Sarcastic): Precision=0.8097, Recall=0.8738, F1=0.8405
+Class 1 (Sarcastic):     Precision=0.7905, Recall=0.6986, F1=0.7418
 ------------------------------------------
-Confusion Matrix: [TN=1136, FP= 164] | [FN= 256, TP= 630]
+Confusion Matrix: [TN=1136, FP= 164] | [FN= 267, TP= 619]
 ==========================================
 
 
@@ -553,12 +544,12 @@ Instantiating bert-base-multilingual-cased for binary classification...
 Key                                        | Status     | 
 -------------------------------------------+------------+-
 cls.predictions.transform.dense.weight     | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
-cls.seq_relationship.weight                | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
 cls.predictions.bias                       | UNEXPECTED | 
 cls.seq_relationship.bias                  | UNEXPECTED | 
-cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
 classifier.weight                          | MISSING    | 
 classifier.bias                            | MISSING    | 
 
@@ -619,7 +610,7 @@ prep_no_emojis = UrduPreprocessor(remove_emojis=True)
 X_train_no_emoji = X_train.apply(prep_no_emojis).tolist()
 X_test_no_emoji = X_test.apply(prep_no_emojis).tolist()
 
-vec_emoji_ablation = TfidfVectorizer(ngram_range=(1, 2), max_features=10000, sublinear_tf=True)
+vec_emoji_ablation = TfidfVectorizer(ngram_range=(1, 2), max_features=12000, sublinear_tf=True)
 X_train_no_emoji_vec = vec_emoji_ablation.fit_transform(X_train_no_emoji)
 X_test_no_emoji_vec = vec_emoji_ablation.transform(X_test_no_emoji)
 
@@ -636,8 +627,8 @@ print(f"  With Emojis P
     === ABLATION 1: EMOJI IMPACT EXPERIMENT ===
 Results of Emoji Ablation:
   With Emojis Preserved Macro-F1:    0.7979
-  Without Emojis (Stripped) Macro-F1: 0.8025
-  Empirical Delta:                  -0.0045 Macro-F1 points
+  Without Emojis (Stripped) Macro-F1: 0.7977
+  Empirical Delta:                  +0.0003 Macro-F1 points
 
 === ABLATION 2: WORD VS. CHARACTER VS. COMBINED N-GRAMS ===
 Word (1-2g) Macro-F1:          0.7979
@@ -645,9 +636,9 @@ Char (3-5g) Macro-F1:          0.8027
 Combined Word + Char Macro-F1: 0.8053
 
 === ABLATION 3: RAW UNNORMALIZED VS. URDU NORMALIZED TEXT ===
-Raw Unnormalized Text Macro-F1: 0.7969
+Raw Unnormalized Text Macro-F1: 0.7981
 Urdu Normalized Text Macro-F1:   0.7979
-Empirical Delta:                 +0.0011 Macro-F1 points
+Empirical Delta:                 -0.0001 Macro-F1 points
 
 
 ======================================================================
@@ -712,14 +703,14 @@ comparison_df = pd.DataFrame([
 1       Hybrid Model (TF-IDF + Urdu Features)    0.8202        0.8480   
 2              Ablation: Combined Word + Char    0.8129        0.8378   
 3               Ablation: Char N-grams (3-5g)    0.8115        0.8294   
-4               Ablation: Text WITHOUT Emojis    0.8097        0.8390   
-5             Logistic Regression (Word 1-2g)    0.8102       
+4             Logistic Regression (Word 1-2g)    0.8102        0.8177   
+5             Ablation: Raw Unnormalized Text    0.8056       
   [Output 3: display_data]
     text/plain: <Figure size 1200x600 with 1 Axes>
-    image/png: (length 99041)
+    image/png: (length 98257)
   [Output 4: display_data]
     text/plain: <Figure size 1600x1000 with 6 Axes>
-    image/png: (length 106909)
+    image/png: (length 106549)
 
 ======================================================================
 CELL 21: Type = markdown
@@ -803,7 +794,5 @@ CELL 24: Type = markdown
 This investigation addressed binary text classification of Urdu social-media text into Sarcastic (`1`) versus Non-Sarcastic (`0`) classes using the provided ~20,000 post dataset. Sarcasm in Urdu is computationally challenging due to non-standard orthography, morphological complexity, dialectal variation, and subtle pragmatic irony.
 
 ### 2. Preprocessing & Sarcasm Cue Justification
-Contrary to standard NLP workflows where emojis, punctuation, and repetition are stripped as noise, we demonstrated that in Urdu sarcasm detection:
-- **Emojis are primary carriers of tone:** Stripping emojis resulted in a substantial drop in Macro-F1 across all models.
-- **Character Normalization is critical:** Unifying Arabic/Urdu Unicode variants (`ی/ي/ے`, `ک/ك`, `ہ/ۂ/ة`) and stripping diacritics (Aerab) reduced vocabulary fragmentation without losing semantic information.
-- **Elongation com
+Contrary to standard NLP workflows where emojis, punctuation, and repetition are stripped as noise, our investigation revealed key empirical behaviors in Urdu sarcasm detection:
+- **Emojis Require Contextual / Incongruity Modeling:** In shallow bag-of-words (pure LinearSVC), stripping uncontextualized emojis yielded a negligible shift ($F_1 = 0.8025$ vs $0.7979$) because laughing emojis (`😂`, `🤣`) appear frequently across both genuine humor and sarcastic mockery. However, when emojis were stru

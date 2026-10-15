@@ -714,7 +714,32 @@ def generate_report():
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
-    chrome_path = r'C:\Program Files\Google\Chrome\Application\chrome.exe'
+    def get_chrome_path():
+        mac_paths = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+        ]
+        for p in mac_paths:
+            if os.path.exists(p):
+                return p
+        win_paths = [
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe")
+        ]
+        for p in win_paths:
+            if os.path.exists(p):
+                return p
+        for cmd in ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']:
+            found = shutil.which(cmd)
+            if found:
+                return found
+        return None
+
+    chrome_path = get_chrome_path()
+    if not chrome_path:
+        raise RuntimeError("Google Chrome or Chromium binary not found for PDF compilation.")
+
     cmd = [
         chrome_path,
         '--headless=new',
@@ -724,7 +749,9 @@ def generate_report():
         html_file
     ]
 
-    subprocess.run(cmd, capture_output=True, text=True)
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        print("Chrome error:", res.stderr)
 
     reader = pymupdf.open(pdf_file)
     print(f"Generated PDF: {pdf_file}")

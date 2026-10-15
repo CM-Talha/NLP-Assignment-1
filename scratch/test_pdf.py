@@ -1,5 +1,7 @@
 import subprocess
-import pypdf
+import os
+import shutil
+import pymupdf
 
 html_content = '''<!DOCTYPE html>
 <html>
@@ -22,20 +24,45 @@ h1 { color: #1a365d; }
 with open('scratch/test.html', 'w', encoding='utf-8') as f:
     f.write(html_content)
 
-chrome_path = r'C:\Program Files\Google\Chrome\Application\chrome.exe'
-cmd = [
-    chrome_path,
-    '--headless=new',
-    '--disable-gpu',
-    '--print-to-pdf=scratch/test.pdf',
-    '--no-pdf-header-footer',
-    'scratch/test.html'
-]
+def get_chrome_path():
+    mac_paths = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+    ]
+    for p in mac_paths:
+        if os.path.exists(p):
+            return p
+    win_paths = [
+        r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+        r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe")
+    ]
+    for p in win_paths:
+        if os.path.exists(p):
+            return p
+    for cmd in ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']:
+        found = shutil.which(cmd)
+        if found:
+            return found
+    return None
 
-res = subprocess.run(cmd, capture_output=True, text=True)
-print('Return code:', res.returncode)
+chrome_path = get_chrome_path()
+if chrome_path:
+    cmd = [
+        chrome_path,
+        '--headless=new',
+        '--disable-gpu',
+        '--print-to-pdf=scratch/test.pdf',
+        '--no-pdf-header-footer',
+        'scratch/test.html'
+    ]
 
-reader = pypdf.PdfReader('scratch/test.pdf')
-print('Generated PDF Page count:', len(reader.pages))
-text = reader.pages[0].extract_text()
-print('Extracted text preview:', repr(text[:100]))
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    print('Return code:', res.returncode)
+
+    reader = pymupdf.open('scratch/test.pdf')
+    print('Generated PDF Page count:', len(reader))
+    text = reader[0].get_text()
+    print('Extracted text preview:', repr(text[:100]))
+else:
+    print('Chrome not found on this system.')
